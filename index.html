@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Món Quà Từ Đại Dương — Hộp Nhẫn Bạc Kim Cương 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --box-primary: #035388;
+            --box-glow: rgba(3, 105, 161, 0.55);
+            --box-deep: #010b16;
+            --box-accent: #38bdf8;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--box-deep);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #f0f9ff;
+            transition: background-color 1s ease;
+        }
+        .font-serif-luxury {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+        }
+
+        /* Dynamic Color-Synced Background Layers */
+        #bg-effects-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .ambient-aura {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: 
+                radial-gradient(circle at 50% 44%, var(--box-glow) 0%, rgba(2, 132, 199, 0.18) 38%, transparent 72%),
+                radial-gradient(circle at 50% 100%, rgba(56, 189, 248, 0.16) 0%, transparent 60%);
+            transition: all 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .ambient-aura.box-opened {
+            background: 
+                radial-gradient(circle at 50% 42%, var(--box-glow) 0%, rgba(56, 189, 248, 0.32) 45%, transparent 78%),
+                radial-gradient(circle at 50% 85%, rgba(125, 211, 252, 0.25) 0%, transparent 65%);
+            filter: brightness(1.18);
+        }
+
+        /* 3D Canvas Container */
+        #canvas-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            cursor: grab;
+        }
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* Rounded Glassmorphic Cards */
+        .ocean-glass {
+            background: rgba(6, 28, 52, 0.58);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(125, 211, 252, 0.28);
+            box-shadow: 
+                0 24px 60px rgba(0, 8, 24, 0.65),
+                0 0 35px var(--box-glow),
+                inset 0 1px 1px rgba(255, 255, 255, 0.28);
+            transition: border-color 0.6s ease, box-shadow 0.8s ease, background 0.6s ease;
+        }
+
+        /* Wish Card Transition */
+        .wish-card-wrapper {
+            transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .wish-hidden {
+            opacity: 0;
+            transform: translateY(28px) scale(0.94);
+            pointer-events: none;
+        }
+        .wish-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* Interactive Pill Buttons */
+        .gift-btn {
+            transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .gift-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -70%;
+            width: 45%;
+            height: 200%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+            transform: rotate(25deg);
+            transition: left 0.65s ease;
+        }
+        .gift-btn:hover::after {
+            left: 135%;
+        }
+        .gift-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px -4px var(--box-glow);
+        }
+        .gift-btn:active {
+            transform: translateY(0) scale(0.97);
+        }
+
+        /* Color Swatch Ring */
+        .swatch-pill {
+            transition: all 0.3s ease;
+        }
+        .swatch-pill.active {
+            transform: scale(1.16);
+            box-shadow: 0 0 0 2px #021324, 0 0 0 4px #7dd3fc, 0 0 18px #38bdf8;
+        }
+
+        @keyframes pulse-ocean {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55), 0 12px 32px rgba(2, 132, 199, 0.45); }
+            50% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0), 0 12px 32px rgba(2, 132, 199, 0.65); }
+        }
+        .cta-ocean-pulse {
+            animation: pulse-ocean 2.6s infinite;
+        }
+    </style>
+</head>
+<body class="relative select-none">
+
+    <!-- 2D Dynamic Background Canvas (Synced with Ring Box Color) -->
+    <canvas id="bg-effects-canvas"></canvas>
+    <div id="ambient-aura" class="ambient-aura"></div>
+
+    <!-- 3D Three.js Scene Container -->
+    <div id="canvas-container" title="Chạm vào hộp nhẫn lơ lửng để Mở/Đóng • Kéo để xoay 360°"></div>
+
+    <!-- Top Floating Bar: Subtle Customizer aligned to the right -->
+    <header class="fixed top-0 left-0 right-0 z-20 pointer-events-none px-4 sm:px-8 pt-4 sm:pt-6 flex items-center justify-end gap-3">
+        <!-- Quick Actions: Theme & Sound -->
+        <div class="ocean-glass pointer-events-auto px-3 py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
+            <!-- Sắc độ Xanh Nước Biển (Đồng bộ nền) -->
+            <div class="flex items-center gap-1.5 px-2 py-0.5 border-r border-sky-300/20 mr-0.5" title="Đổi sắc độ Xanh Nước Biển & Hiệu ứng nền">
+                <button data-theme="ocean" class="swatch-pill active w-5 h-5 rounded-full bg-gradient-to-br from-[#0284c7] to-[#03396c] border border-white/50" title="Xanh Đại Dương Đậm Sang Trọng (Mặc định)"></button>
+                <button data-theme="lagoon" class="swatch-pill w-5 h-5 rounded-full bg-gradient-to-br from-[#0d9488] to-[#115e59] border border-white/50" title="Xanh Ngọc Lục Bảo Trầm (Deep Lagoon)"></button>
+                <button data-theme="sapphire" class="swatch-pill w-5 h-5 rounded-full bg-gradient-to-br from-[#2563eb] to-[#172554] border border-white/50" title="Xanh Sapphire Hoàng Gia"></button>
+            </div>
+
+            <button id="btn-sound" class="p-1.5 rounded-full text-sky-100 hover:bg-sky-400/20 transition" title="Bật/Tắt giai điệu lấp lánh">
+                <svg id="icon-sound-on" class="w-4 h-4 text-sky-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <svg id="icon-sound-off" class="w-4 h-4 text-slate-400 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Floating Romantic Wish Card (Appears when Box Opens) -->
+    <section id="wish-card" class="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-20 w-[92%] max-w-xl wish-card-wrapper wish-hidden">
+        <div class="ocean-glass rounded-[32px] px-6 py-5 sm:px-8 sm:py-6 text-center relative overflow-hidden">
+            <!-- Close Wish Card Button -->
+            <button id="btn-close-wish" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white/10 hover:bg-sky-400/25 border border-sky-200/25 flex items-center justify-center text-sky-200 hover:text-white transition" title="Đóng lời chúc">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <!-- Decorative top shimmer bar -->
+            <div class="mx-auto w-24 h-1 rounded-full bg-gradient-to-r from-transparent via-sky-300 to-transparent mb-3 opacity-80"></div>
+            
+            <p id="wish-recipient" class="text-xs sm:text-sm uppercase tracking-[0.25em] text-sky-300 font-semibold mb-1.5">
+                Gửi người anh thương
+            </p>
+            
+            <h2 id="wish-message" class="font-serif-luxury italic text-xl sm:text-2xl md:text-[26px] leading-relaxed text-white drop-shadow-[0_2px_12px_rgba(14,165,233,0.5)]">
+                “Chúc emm ngày 20/10 thật hạnh phúc ,tràng đầy yêu thương.Chúc emm ngày càng xinh đẹp ,ngày càng dth.Ah iu em cô bé de ghett của ah”
+            </h2>
+
+            <div class="mt-3 flex items-center justify-center gap-3 text-[11px] text-sky-200/80">
+                <span class="h-[1px] w-8 bg-gradient-to-r from-transparent to-sky-300/60"></span>
+                <span id="wish-signature" class="tracking-widest uppercase font-medium text-sky-100">ahh ghett em</span>
+                <span class="h-[1px] w-8 bg-gradient-to-l from-transparent to-sky-300/60"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bottom Floating Control Pill -->
+    <footer class="fixed bottom-0 left-0 right-0 z-20 p-4 sm:p-6 pointer-events-none flex flex-col items-center">
+        <div class="ocean-glass pointer-events-auto rounded-full p-2 sm:p-2.5 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
+            <!-- Primary Open / Close Gift Button -->
+            <button id="btn-toggle-box" class="gift-btn cta-ocean-pulse px-5 sm:px-7 py-3 rounded-full bg-gradient-to-r from-sky-400 via-cyan-300 to-sky-200 text-slate-950 font-bold text-xs sm:text-sm tracking-wide flex items-center gap-2 shadow-lg">
+                <svg id="icon-box-state" class="w-4 h-4 transition-transform duration-500" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
+                </svg>
+                <span id="label-toggle-box">Mở Hộp Nhẫn & Xem Lời Chúc</span>
+            </button>
+
+            <!-- Open / Close Wish Card Button -->
+            <button id="btn-toggle-wish" class="gift-btn px-4 py-3 rounded-full bg-sky-500/20 hover:bg-sky-400/30 border border-sky-300/35 text-sky-100 text-xs font-semibold flex items-center gap-1.5" title="Đóng / Mở tấm thiệp lời chúc">
+                <svg class="w-4 h-4 text-sky-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <span id="label-toggle-wish">Mở lời chúc</span>
+            </button>
+
+            <!-- Elevate Ring out of Box Button -->
+            <button id="btn-levitate-ring" class="gift-btn px-4 py-3 rounded-full bg-sky-500/20 hover:bg-sky-400/30 border border-sky-300/35 text-sky-100 text-xs font-semibold flex items-center gap-1.5" title="Nâng chiếc nhẫn bạc kim cương bay lên để ngắm kỹ hơn">
+                <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                </svg>
+                <span id="label-levitate-ring">Nâng nhẫn</span>
+            </button>
+
+            <!-- Close-up Camera Toggle -->
+            <button id="btn-closeup" class="gift-btn px-3.5 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-sky-100 text-xs font-medium flex items-center gap-1.5" title="Phóng to ngắm viên kim cương">
+                <svg class="w-4 h-4 text-sky-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <span id="label-closeup" class="hidden sm:inline">Cận cảnh</span>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        const OCEAN_THEMES = {
+            ocean: {
+                name: 'Xanh Đại Dương Đậm',
+                boxOuterHex: 0x034c7c,       // Deep Royal Ocean Blue (Đậm và sang hơn)
+                boxEmissiveHex: 0x011322,    // Subtle deep navy shadow glow
+                cushionHex: 0x0b0d11,        // Ultra-deep obsidian black velvet ring holder
+                satinHex: 0x0f1218,          // Deep obsidian inner lid satin
+                haloHex: 0x38bdf8,           // Floating magic ring glow
+                cssPrimary: '#035388',
+                cssGlow: 'rgba(3, 105, 161, 0.55)',
+                cssDeep: '#010b16',
+                waveColors: ['rgba(3, 83, 136, 0.42)', 'rgba(2, 132, 199, 0.28)', 'rgba(56, 189, 248, 0.20)']
+            },
+            lagoon: {
+                name: 'Xanh Ngọc Đại Dương Đậm',
+                boxOuterHex: 0x0a6c66,       // Deep Luxury Teal / Sea Lagoon
+                boxEmissiveHex: 0x021c1b,
+                cushionHex: 0x0b0d11,        // Ultra-deep obsidian black velvet ring holder
+                satinHex: 0x0f1218,
+                haloHex: 0x2dd4bf,
+                cssPrimary: '#0f766e',
+                cssGlow: 'rgba(20, 184, 166, 0.50)',
+                cssDeep: '#011112',
+                waveColors: ['rgba(15, 118, 110, 0.40)', 'rgba(13, 148, 136, 0.28)', 'rgba(94, 234, 212, 0.20)']
+            },
+            sapphire: {
+                name: 'Xanh Sapphire Hoàng Gia',
+                boxOuterHex: 0x133888,       // Deep Royal Midnight Sapphire
+                boxEmissiveHex: 0x040d26,
+                cushionHex: 0x0b0d11,        // Ultra-deep obsidian black velvet ring holder
+                satinHex: 0x0f1218,
+                haloHex: 0x60a5fa,
+                cssPrimary: '#1e40af',
+                cssGlow: 'rgba(37, 99, 235, 0.55)',
+                cssDeep: '#020718',
+                waveColors: ['rgba(30, 58, 138, 0.42)', 'rgba(59, 130, 246, 0.28)', 'rgba(147, 197, 253, 0.20)']
+            }
+        };
+
+        const APP_STATE = {
+            isOpen: false,
+            isWishVisible: false,
+            lidAngle: 0,
+            targetLidAngle: 0,
+            isRingElevated: false,
+            ringElevation: 0,
+            isCloseup: false,
+            soundEnabled: true,
+            themeKey: 'ocean',
+            openProgress: 0
+        };
+
+        // Romantic Harp & Ocean Chime Synthesizer
+        class OceanChimeAudio {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playGiftChime(opening = true) {
+                if (!APP_STATE.soundEnabled) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const now = this.ctx.currentTime;
+                    if (opening) {
+                        // Dreamy major 9th harp arpeggio
+                        const freqs = [523.25, 659.25, 783.99, 987.77, 1174.66, 1567.98];
+                        freqs.forEach((f, i) => {
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(f, now + i * 0.085);
+                            gain.gain.setValueAtTime(0.0001, now + i * 0.085);
+                            gain.gain.exponentialRampToValueAtTime(0.05, now + i * 0.085 + 0.04);
+                            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.085 + 1.7);
+                            osc.connect(gain);
+                            gain.connect(this.ctx.destination);
+                            osc.start(now + i * 0.085);
+                            osc.stop(now + i * 0.085 + 1.75);
+                        });
+                    } else {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(220, now);
+                        osc.frequency.exponentialRampToValueAtTime(88, now + 0.25);
+                        gain.gain.setValueAtTime(0.045, now);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.3);
+                    }
+                } catch (e) {}
+            }
+        }
+        const chimeAudio = new OceanChimeAudio();
+
+        let bgCanvas, bgCtx;
+        let bgOrbs = [];
+
+        function initDynamicBackground() {
+            bgCanvas = document.getElementById('bg-effects-canvas');
+            bgCtx = bgCanvas.getContext('2d');
+            resizeBgCanvas();
+
+            // Create soft glowing ocean bokeh orbs that rise and react to the box state
+            bgOrbs = [];
+            for (let i = 0; i < 34; i++) {
+                bgOrbs.push({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                    r: 18 + Math.random() * 85,
+                    vy: 0.25 + Math.random() * 0.65,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    alpha: 0.06 + Math.random() * 0.16,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function resizeBgCanvas() {
+            if (!bgCanvas) return;
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        }
+
+        function renderDynamicBackground(elapsed) {
+            if (!bgCtx) return;
+            const w = bgCanvas.width;
+            const h = bgCanvas.height;
+            const theme = OCEAN_THEMES[APP_STATE.themeKey];
+            const openBoost = 1 + APP_STATE.openProgress * 0.75;
+
+            bgCtx.clearRect(0, 0, w, h);
+
+            // 1. Flowing Ocean Aurora Light Ribbon Waves
+            for (let layer = 0; layer < 3; layer++) {
+                bgCtx.save();
+                bgCtx.beginPath();
+                const baseY = h * (0.42 + layer * 0.14);
+                bgCtx.moveTo(0, h);
+                for (let x = 0; x <= w; x += 40) {
+                    const wave1 = Math.sin(x * 0.0025 + elapsed * (0.7 + layer * 0.2) + layer) * (38 * openBoost);
+                    const wave2 = Math.cos(x * 0.005 - elapsed * 0.45 + layer * 2) * (22 * openBoost);
+                    bgCtx.lineTo(x, baseY + wave1 + wave2);
+                }
+                bgCtx.lineTo(w, h);
+                bgCtx.closePath();
+
+                const grad = bgCtx.createLinearGradient(0, baseY - 80, 0, h);
+                grad.addColorStop(0, theme.waveColors[layer]);
+                grad.addColorStop(1, 'rgba(2, 16, 31, 0)');
+                bgCtx.fillStyle = grad;
+                bgCtx.fill();
+                bgCtx.restore();
+            }
+
+            // 2. Floating Luminous Sea Bokeh Orbs
+            bgCtx.save();
+            bgCtx.globalCompositeOperation = 'screen';
+            bgOrbs.forEach((orb) => {
+                orb.y -= orb.vy * openBoost;
+                orb.x += orb.vx + Math.sin(elapsed + orb.phase) * 0.25;
+                if (orb.y + orb.r < 0) {
+                    orb.y = h + orb.r;
+                    orb.x = Math.random() * w;
+                }
+                const pulseAlpha = orb.alpha * (0.75 + 0.35 * Math.sin(elapsed * 1.8 + orb.phase)) * openBoost;
+                const radGrad = bgCtx.createRadialGradient(orb.x, orb.y, 1, orb.x, orb.y, orb.r);
+                radGrad.addColorStop(0, `rgba(186, 230, 253, ${Math.min(0.55, pulseAlpha * 1.5)})`);
+                radGrad.addColorStop(0.45, theme.waveColors[0]);
+                radGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                bgCtx.fillStyle = radGrad;
+                bgCtx.beginPath();
+                bgCtx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
+                bgCtx.fill();
+            });
+            bgCtx.restore();
+        }
+
+        function createOceanStudioEnvMap() {
+            const size = 256;
+            const canvases = [];
+            for (let i = 0; i < 6; i++) {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                const grad = ctx.createLinearGradient(0, 0, 0, size);
+                grad.addColorStop(0, '#1e3a5f');
+                grad.addColorStop(0.45, '#071930');
+                grad.addColorStop(0.55, '#040d1a');
+                grad.addColorStop(1, '#0c2d48');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, size, size);
+
+                // High-contrast studio light strips for crisp silver & diamond reflections
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(28, 22, size - 56, 34);
+
+                ctx.fillStyle = '#e0f2fe';
+                ctx.beginPath();
+                ctx.arc(size * 0.72, size * 0.44, 38, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#7dd3fc';
+                ctx.fillRect(16, size * 0.7, size - 32, 20);
+
+                canvases.push(canvas);
+            }
+            const cubeTexture = new THREE.CubeTexture(canvases);
+            cubeTexture.needsUpdate = true;
+            return cubeTexture;
+        }
+
+        function createFineVelvetBump() {
+            const size = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const imgData = ctx.createImageData(size, size);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const v = 120 + Math.floor(Math.random() * 65);
+                data[i] = v;
+                data[i + 1] = v;
+                data[i + 2] = v;
+                data[i + 3] = 255;
+            }
+            ctx.putImageData(imgData, 0, 0);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(7, 7);
+            return tex;
+        }
+
+        function createInnerLidEmblemTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 512, 512);
+
+            ctx.strokeStyle = 'rgba(224, 242, 254, 0.85)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(256, 256, 148, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(256, 256, 136, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Diamond star emblem
+            ctx.fillStyle = '#e0f2fe';
+            ctx.beginPath();
+            ctx.moveTo(256, 138);
+            ctx.lineTo(270, 156);
+            ctx.lineTo(256, 178);
+            ctx.lineTo(242, 156);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.font = 'italic 600 40px "Cormorant Garamond", Georgia, serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Forever Yours', 256, 252);
+
+            ctx.font = '500 17px "Plus Jakarta Sans", sans-serif';
+            ctx.fillStyle = 'rgba(186, 230, 253, 0.85)';
+            ctx.fillText('925 SILVER • DIAMOND', 256, 290);
+
+            ctx.font = 'italic 22px "Cormorant Garamond", Georgia, serif';
+            ctx.fillText('Mãi Bên Nhau', 256, 330);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        function createStarSparkleTexture() {
+            const size = 128;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const c = size / 2;
+
+            const radGrad = ctx.createRadialGradient(c, c, 1, c, c, c);
+            radGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            radGrad.addColorStop(0.22, 'rgba(224, 242, 254, 0.9)');
+            radGrad.addColorStop(0.55, 'rgba(56, 189, 248, 0.3)');
+            radGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = radGrad;
+            ctx.fillRect(0, 0, size, size);
+
+            ctx.save();
+            ctx.translate(c, c);
+            for (let i = 0; i < 4; i++) {
+                ctx.rotate(Math.PI / 4);
+                const len = i % 2 === 0 ? c * 0.96 : c * 0.55;
+                const w = i % 2 === 0 ? 3.2 : 1.8;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(0, -len);
+                ctx.quadraticCurveTo(w, 0, 0, len);
+                ctx.quadraticCurveTo(-w, 0, 0, -len);
+                ctx.fill();
+            }
+            ctx.restore();
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // Helper: Create a 2D Rounded Rectangle Shape for smooth extruded 3D rounded box corners
+        function createRoundedRectShape(width, depth, radius) {
+            const shape = new THREE.Shape();
+            const hw = width / 2;
+            const hd = depth / 2;
+            const r = Math.min(radius, hw, hd);
+
+            shape.moveTo(-hw + r, -hd);
+            shape.lineTo(hw - r, -hd);
+            shape.quadraticCurveTo(hw, -hd, hw, -hd + r);
+            shape.lineTo(hw, hd - r);
+            shape.quadraticCurveTo(hw, hd, hw - r, hd);
+            shape.lineTo(-hw + r, hd);
+            shape.quadraticCurveTo(-hw, hd, -hw, hd - r);
+            shape.lineTo(-hw, -hd + r);
+            shape.quadraticCurveTo(-hw, -hd, -hw + r, -hd);
+            return shape;
+        }
+
+        // Helper: Create a Hollow Rounded Box Wall Geometry (Smooth outer and inner rounded corners)
+        function createHollowRoundedShellGeometry(width, depth, height, wallThickness, cornerRadius, bevelSize = 0.05) {
+            const outerShape = createRoundedRectShape(width, depth, cornerRadius);
+            const innerHole = createRoundedRectShape(
+                width - wallThickness * 2,
+                depth - wallThickness * 2,
+                Math.max(0.08, cornerRadius - wallThickness * 0.85)
+            );
+            outerShape.holes.push(innerHole);
+
+            const geo = new THREE.ExtrudeGeometry(outerShape, {
+                depth: height,
+                bevelEnabled: true,
+                bevelSegments: 8,
+                steps: 1,
+                bevelSize: bevelSize,
+                bevelThickness: bevelSize,
+                curveSegments: 24
+            });
+            geo.rotateX(-Math.PI / 2);
+            return geo;
+        }
+
+        // Helper: Create a Solid Rounded Cap/Bottom Plate with smooth pillowed bevels
+        function createRoundedPlateGeometry(width, depth, height, cornerRadius, bevelSize = 0.08) {
+            const shape = createRoundedRectShape(width, depth, cornerRadius);
+            const geo = new THREE.ExtrudeGeometry(shape, {
+                depth: height,
+                bevelEnabled: true,
+                bevelSegments: 10,
+                steps: 1,
+                bevelSize: bevelSize,
+                bevelThickness: bevelSize,
+                curveSegments: 24
+            });
+            geo.rotateX(-Math.PI / 2);
+            return geo;
+        }
+
+        let scene, camera, renderer;
+        let levitatingRootGroup, boxLidPivot, ringGroup, diamondMesh, innerBoxLight;
+        let floatingHaloGroup, haloRingMat1, haloRingMat2;
+        let velvetOuterMat, velvetCushionMat, satinInnerMat;
+        let diamondSparkleSprites = [];
+        let floating3DSparkles;
+        let clickableMeshes = [];
+
+        const cameraControl = {
+            isDragging: false,
+            prevX: 0,
+            prevY: 0,
+            downX: 0,
+            downY: 0,
+            theta: 0.38,
+            phi: 1.06,
+            radius: 7.2,
+            targetTheta: 0.38,
+            targetPhi: 1.06,
+            targetRadius: 7.2,
+            lookAtTarget: new THREE.Vector3(0, 0.15, 0),
+            currentLookAt: new THREE.Vector3(0, 0.15, 0)
+        };
+
+        function initThreeExperience() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.28;
+            container.appendChild(renderer.domElement);
+
+            const envMap = createOceanStudioEnvMap();
+            scene.environment = envMap;
+
+            // Studio Lighting tailored for Vibrant Ocean Blue Velvet & Silver Diamond
+            const ambientLight = new THREE.AmbientLight(0xe0f2fe, 0.65);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.SpotLight(0xffffff, 2.5);
+            keyLight.position.set(5, 9, 6);
+            keyLight.angle = Math.PI / 3.5;
+            keyLight.penumbra = 0.7;
+            keyLight.castShadow = true;
+            scene.add(keyLight);
+
+            const oceanRimLight = new THREE.DirectionalLight(0x38bdf8, 1.8);
+            oceanRimLight.position.set(-6, 4, -5);
+            scene.add(oceanRimLight);
+
+            const bottomLevitationLight = new THREE.PointLight(0x0ea5e9, 1.6, 8);
+            bottomLevitationLight.position.set(0, -2.2, 1.5);
+            scene.add(bottomLevitationLight);
+
+            innerBoxLight = new THREE.PointLight(0xffffff, 0, 6);
+            innerBoxLight.position.set(0, 1.3, 0.2);
+            scene.add(innerBoxLight);
+
+            // Root Group that Levitates/Floats in mid-air
+            levitatingRootGroup = new THREE.Group();
+            scene.add(levitatingRootGroup);
+
+            buildRoundedOceanRingBox(envMap);
+            buildFloatingAuraHalos();
+            buildSilverDiamondRing(envMap);
+            buildSparkleAndMagicParticles();
+            setupInteractions(container);
+            loadWishFromURL();
+        }
+
+        function buildRoundedOceanRingBox(envMap) {
+            const velvetBump = createFineVelvetBump();
+            const theme = OCEAN_THEMES[APP_STATE.themeKey];
+
+            // Luxury Deep Ocean Blue Velvet-Suede Physical Material (Exterior Shell)
+            velvetOuterMat = new THREE.MeshPhysicalMaterial({
+                color: theme.boxOuterHex,
+                emissive: theme.boxEmissiveHex,
+                roughness: 0.58,
+                metalness: 0.16,
+                clearcoat: 0.24,
+                clearcoatRoughness: 0.42,
+                reflectivity: 0.7,
+                bumpMap: velvetBump,
+                bumpScale: 0.014,
+                envMap: envMap,
+                envMapIntensity: 0.95
+            });
+
+            // Ultra-Matte Obsidian Black Velvet Material for the Ring Holder Cushions
+            velvetCushionMat = new THREE.MeshPhysicalMaterial({
+                color: theme.cushionHex,
+                emissive: 0x020305,
+                roughness: 0.92,
+                metalness: 0.04,
+                clearcoat: 0.08,
+                clearcoatRoughness: 0.85,
+                bumpMap: velvetBump,
+                bumpScale: 0.025,
+                envMap: envMap,
+                envMapIntensity: 0.18
+            });
+
+            satinInnerMat = new THREE.MeshPhysicalMaterial({
+                color: theme.satinHex,
+                roughness: 0.48,
+                metalness: 0.15,
+                clearcoat: 0.15,
+                clearcoatRoughness: 0.5,
+                envMap: envMap,
+                envMapIntensity: 0.35
+            });
+
+            // Mirror-Polished Platinum / White Gold Hardware Trim Material
+            const silverTrimMat = new THREE.MeshStandardMaterial({
+                color: 0xf8fafc,
+                roughness: 0.09,
+                metalness: 0.98,
+                envMap: envMap,
+                envMapIntensity: 2.1
+            });
+
+            // Brushed Dark Gunmetal Accent for Recessed Seam Details
+            const darkMetalSeamMat = new THREE.MeshStandardMaterial({
+                color: 0x1e293b,
+                roughness: 0.35,
+                metalness: 0.85,
+                envMap: envMap,
+                envMapIntensity: 0.8
+            });
+
+            const boxW = 2.44;
+            const boxD = 2.44;
+            const cornerR = 0.60; // Smooth luxury rounded corners ("bo góc tròn")
+            const wallT = 0.18;
+
+            // 1. Multi-Tiered Rounded Base Assembly
+            const baseGroup = new THREE.Group();
+            levitatingRootGroup.add(baseGroup);
+
+            // Recessed Bottom Plinth (Đế hộp phân tầng tạo chiều sâu sang trọng)
+            const plinthGeo = createRoundedPlateGeometry(boxW - 0.28, boxD - 0.28, 0.08, cornerR - 0.12, 0.04);
+            const plinthMesh = new THREE.Mesh(plinthGeo, velvetOuterMat);
+            plinthMesh.position.y = -0.74;
+            baseGroup.add(plinthMesh);
+
+            // Platinum Bottom Accent Ring around the Plinth
+            const bottomPlatinumRingGeo = createHollowRoundedShellGeometry(boxW - 0.18, boxD - 0.18, 0.024, 0.04, cornerR - 0.08, 0.006);
+            const bottomPlatinumRing = new THREE.Mesh(bottomPlatinumRingGeo, silverTrimMat);
+            bottomPlatinumRing.position.y = -0.69;
+            baseGroup.add(bottomPlatinumRing);
+
+            // Pillowed Rounded Bottom Cap
+            const baseBottomGeo = createRoundedPlateGeometry(boxW - 0.08, boxD - 0.08, 0.14, cornerR - 0.03, 0.08);
+            const baseBottomMesh = new THREE.Mesh(baseBottomGeo, velvetOuterMat);
+            baseBottomMesh.position.y = -0.66;
+            baseBottomMesh.castShadow = true;
+            baseBottomMesh.receiveShadow = true;
+            baseGroup.add(baseBottomMesh);
+
+            // Hollow Rounded Base Walls with plush bevels
+            const baseWallGeo = createHollowRoundedShellGeometry(boxW, boxD, 0.82, wallT, cornerR, 0.055);
+            const baseWallMesh = new THREE.Mesh(baseWallGeo, velvetOuterMat);
+            baseWallMesh.position.y = -0.59;
+            baseWallMesh.castShadow = true;
+            baseWallMesh.receiveShadow = true;
+            baseGroup.add(baseWallMesh);
+
+            // Rounded Platinum Rim Trim along the Lip of the Box
+            const silverRimGeo = createHollowRoundedShellGeometry(boxW + 0.03, boxD + 0.03, 0.038, 0.05, cornerR + 0.015, 0.01);
+            const baseSilverRim = new THREE.Mesh(silverRimGeo, silverTrimMat);
+            baseSilverRim.position.y = 0.23;
+            baseGroup.add(baseSilverRim);
+
+            // Stepped Inner Velvet Rebate Lip (Gờ âm dương bọc nhung đen cao cấp)
+            const innerRebateLipGeo = createHollowRoundedShellGeometry(
+                boxW - wallT * 1.15,
+                boxD - wallT * 1.15,
+                0.065,
+                0.055,
+                cornerR - 0.09,
+                0.012
+            );
+            const innerRebateLip = new THREE.Mesh(innerRebateLipGeo, velvetCushionMat);
+            innerRebateLip.position.y = 0.245;
+            baseGroup.add(innerRebateLip);
+
+            // Signature Front Platinum Clasp Lock with Diamond Stud (Khóa cài bạch kim đính đá phía trước)
+            const claspGroup = new THREE.Group();
+            claspGroup.position.set(0, 0.245, boxD / 2 + 0.018);
+            baseGroup.add(claspGroup);
+
+            const claspPlateGeo = createRoundedPlateGeometry(0.46, 0.14, 0.055, 0.045, 0.015);
+            claspPlateGeo.rotateX(Math.PI / 2);
+            const claspPlate = new THREE.Mesh(claspPlateGeo, silverTrimMat);
+            claspGroup.add(claspPlate);
+
+            const claspButtonGeo = new THREE.CylinderGeometry(0.036, 0.036, 0.04, 20);
+            claspButtonGeo.rotateX(Math.PI / 2);
+            const claspButton = new THREE.Mesh(claspButtonGeo, silverTrimMat);
+            claspButton.position.set(0, 0.01, 0.032);
+            claspGroup.add(claspButton);
+
+            const claspGemGeo = new THREE.OctahedronGeometry(0.024, 1);
+            const claspGemMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                metalness: 0.1,
+                roughness: 0.0,
+                envMap: envMap,
+                envMapIntensity: 3.2,
+                clearcoat: 1.0
+            });
+            const claspGem = new THREE.Mesh(claspGemGeo, claspGemMat);
+            claspGem.position.set(0, 0.01, 0.052);
+            claspGroup.add(claspGem);
+
+            // 2. Plush Interior Black Velvet Cushions & Side Bolsters
+            const innerSpan = boxW - wallT * 2 - 0.14;
+
+            // Black velvet inner cavity liner so the entire ring compartment is deep black
+            const innerLinerGeo = createHollowRoundedShellGeometry(
+                boxW - wallT * 1.55,
+                boxD - wallT * 1.55,
+                0.78,
+                0.045,
+                cornerR - 0.12,
+                0.018
+            );
+            const innerLinerMesh = new THREE.Mesh(innerLinerGeo, velvetCushionMat);
+            innerLinerMesh.position.y = -0.56;
+            baseGroup.add(innerLinerMesh);
+
+            // Twin Tufted Black Velvet Ring Rolls
+            const cushionRollGeo = new THREE.CylinderGeometry(0.49, 0.49, innerSpan - 0.06, 40);
+            cushionRollGeo.rotateZ(Math.PI / 2);
+
+            const frontRoll = new THREE.Mesh(cushionRollGeo, velvetCushionMat);
+            frontRoll.scale.set(0.96, 0.66, 0.94);
+            frontRoll.position.set(0, -0.03, 0.42);
+            frontRoll.receiveShadow = true;
+            baseGroup.add(frontRoll);
+
+            const backRoll = new THREE.Mesh(cushionRollGeo, velvetCushionMat);
+            backRoll.scale.set(0.96, 0.66, 0.94);
+            backRoll.position.set(0, -0.03, -0.42);
+            backRoll.receiveShadow = true;
+            baseGroup.add(backRoll);
+
+            // Side Black Velvet Bolster Pads for a tailored high-jewelry interior fit
+            const sideBolsterGeo = new THREE.CylinderGeometry(0.16, 0.16, innerSpan * 0.86, 24);
+            sideBolsterGeo.rotateX(Math.PI / 2);
+
+            const leftBolster = new THREE.Mesh(sideBolsterGeo, velvetCushionMat);
+            leftBolster.scale.set(0.75, 0.65, 1.0);
+            leftBolster.position.set(-innerSpan * 0.46, 0.10, 0);
+            baseGroup.add(leftBolster);
+
+            const rightBolster = new THREE.Mesh(sideBolsterGeo, velvetCushionMat);
+            rightBolster.scale.set(0.75, 0.65, 1.0);
+            rightBolster.position.set(innerSpan * 0.46, 0.10, 0);
+            baseGroup.add(rightBolster);
+
+            // Dark central slot recess between the black velvet cushions
+            const slotFloorGeo = new THREE.PlaneGeometry(innerSpan, 0.68);
+            slotFloorGeo.rotateX(-Math.PI / 2);
+            const slotFloor = new THREE.Mesh(slotFloorGeo, new THREE.MeshBasicMaterial({ color: 0x020305 }));
+            slotFloor.position.set(0, -0.16, 0);
+            baseGroup.add(slotFloor);
+
+            // 3. Rounded Hinged Crown Dome Lid
+            boxLidPivot = new THREE.Group();
+            boxLidPivot.position.set(0, 0.27, -boxD / 2 + 0.12);
+            levitatingRootGroup.add(boxLidPivot);
+
+            const lidZOffset = boxD / 2 - 0.12;
+
+            // Luxury 3-Barrel Platinum Hinge Assembly at the back
+            const hingeBarrelGeo = new THREE.CylinderGeometry(0.058, 0.058, 0.28, 24);
+            hingeBarrelGeo.rotateZ(Math.PI / 2);
+            [-0.34, 0, 0.34].forEach((hx) => {
+                const barrel = new THREE.Mesh(hingeBarrelGeo, silverTrimMat);
+                barrel.position.set(hx, 0, 0);
+                boxLidPivot.add(barrel);
+            });
+
+            const hingePinGeo = new THREE.CylinderGeometry(0.035, 0.035, 1.06, 20);
+            hingePinGeo.rotateZ(Math.PI / 2);
+            const hingePin = new THREE.Mesh(hingePinGeo, darkMetalSeamMat);
+            boxLidPivot.add(hingePin);
+
+            // Hollow Rounded Lid Side Shell
+            const lidWallGeo = createHollowRoundedShellGeometry(boxW, boxD, 0.48, wallT, cornerR, 0.055);
+            const lidWallMesh = new THREE.Mesh(lidWallGeo, velvetOuterMat);
+            lidWallMesh.position.set(0, 0.03, lidZOffset);
+            lidWallMesh.castShadow = true;
+            boxLidPivot.add(lidWallMesh);
+
+            // Soft Pillowed Rounded Dome Top Cap
+            const lidTopDomeGeo = createRoundedPlateGeometry(boxW - 0.10, boxD - 0.10, 0.15, cornerR - 0.04, 0.12);
+            const lidTopDome = new THREE.Mesh(lidTopDomeGeo, velvetOuterMat);
+            lidTopDome.position.set(0, 0.50, lidZOffset);
+            lidTopDome.castShadow = true;
+            boxLidPivot.add(lidTopDome);
+
+            // Recessed Platinum Inlay Frame on Top of the Lid (Viền chỉ bạch kim khảm trên mặt hộp)
+            const topInlayRimGeo = createHollowRoundedShellGeometry(
+                boxW - 0.42,
+                boxD - 0.42,
+                0.018,
+                0.028,
+                cornerR - 0.16,
+                0.005
+            );
+            const topInlayRim = new THREE.Mesh(topInlayRimGeo, silverTrimMat);
+            topInlayRim.position.set(0, 0.76, lidZOffset);
+            boxLidPivot.add(topInlayRim);
+
+            // Raised Center Crown Cushion inside the Top Platinum Inlay
+            const topCrownCenterGeo = createRoundedPlateGeometry(
+                boxW - 0.52,
+                boxD - 0.52,
+                0.035,
+                cornerR - 0.20,
+                0.045
+            );
+            const topCrownCenter = new THREE.Mesh(topCrownCenterGeo, velvetOuterMat);
+            topCrownCenter.position.set(0, 0.72, lidZOffset);
+            boxLidPivot.add(topCrownCenter);
+
+            // Lid Platinum Rim Trim
+            const lidSilverRim = new THREE.Mesh(silverRimGeo, silverTrimMat);
+            lidSilverRim.position.set(0, 0.0, lidZOffset);
+            boxLidPivot.add(lidSilverRim);
+
+            // Inner Lid Platinum Framing Bezel + Rounded Black Satin Cushion
+            const innerFrameGeo = createHollowRoundedShellGeometry(
+                innerSpan + 0.06,
+                innerSpan + 0.06,
+                0.03,
+                0.03,
+                cornerR - 0.16,
+                0.006
+            );
+            const innerFrameMesh = new THREE.Mesh(innerFrameGeo, silverTrimMat);
+            innerFrameMesh.position.set(0, 0.36, lidZOffset);
+            boxLidPivot.add(innerFrameMesh);
+
+            const innerSatinGeo = createRoundedPlateGeometry(innerSpan, innerSpan, 0.09, cornerR - 0.18, 0.045);
+            const innerSatinMesh = new THREE.Mesh(innerSatinGeo, satinInnerMat);
+            innerSatinMesh.position.set(0, 0.42, lidZOffset);
+            boxLidPivot.add(innerSatinMesh);
+
+            const emblemPlaneGeo = new THREE.PlaneGeometry(1.28, 1.28);
+            emblemPlaneGeo.rotateX(Math.PI / 2);
+            const emblemMat = new THREE.MeshBasicMaterial({
+                map: createInnerLidEmblemTexture(),
+                transparent: true,
+                opacity: 0.94
+            });
+            const emblemMesh = new THREE.Mesh(emblemPlaneGeo, emblemMat);
+            emblemMesh.position.set(0, 0.372, lidZOffset);
+            boxLidPivot.add(emblemMesh);
+
+            clickableMeshes.push(
+                baseBottomMesh,
+                baseWallMesh,
+                lidWallMesh,
+                lidTopDome,
+                topCrownCenter,
+                claspPlate,
+                frontRoll,
+                backRoll
+            );
+        }
+
+        // Magical Floating Aura Rings beneath the Levitating Box (Replaces static floor)
+        function buildFloatingAuraHalos() {
+            floatingHaloGroup = new THREE.Group();
+            floatingHaloGroup.position.y = -1.12;
+            scene.add(floatingHaloGroup);
+
+            const theme = OCEAN_THEMES[APP_STATE.themeKey];
+
+            const ringGeo1 = new THREE.TorusGeometry(1.55, 0.018, 16, 100);
+            ringGeo1.rotateX(Math.PI / 2);
+            haloRingMat1 = new THREE.MeshBasicMaterial({
+                color: theme.haloHex,
+                transparent: true,
+                opacity: 0.55,
+                blending: THREE.AdditiveBlending
+            });
+            const ring1 = new THREE.Mesh(ringGeo1, haloRingMat1);
+            floatingHaloGroup.add(ring1);
+
+            const ringGeo2 = new THREE.TorusGeometry(2.15, 0.012, 16, 100);
+            ringGeo2.rotateX(Math.PI / 2);
+            haloRingMat2 = new THREE.MeshBasicMaterial({
+                color: theme.haloHex,
+                transparent: true,
+                opacity: 0.28,
+                blending: THREE.AdditiveBlending
+            });
+            const ring2 = new THREE.Mesh(ringGeo2, haloRingMat2);
+            ring2.position.y = -0.18;
+            floatingHaloGroup.add(ring2);
+        }
+
+        function buildSilverDiamondRing(envMap) {
+            ringGroup = new THREE.Group();
+            ringGroup.position.set(0, 0.22, 0);
+            levitatingRootGroup.add(ringGroup);
+
+            // Mirror-Polished 925 Sterling Silver Material
+            const silverMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                metalness: 0.98,
+                roughness: 0.05,
+                envMap: envMap,
+                envMapIntensity: 2.0
+            });
+
+            // 1. Silver Ring Band
+            const bandRadius = 0.44;
+            const bandTube = 0.058;
+            const bandGeo = new THREE.TorusGeometry(bandRadius, bandTube, 32, 96);
+            const bandMesh = new THREE.Mesh(bandGeo, silverMaterial);
+            bandMesh.scale.set(1, 1, 1.18);
+            bandMesh.castShadow = true;
+            ringGroup.add(bandMesh);
+
+            const innerComfortGeo = new THREE.TorusGeometry(bandRadius - 0.018, 0.042, 24, 80);
+            const innerComfort = new THREE.Mesh(innerComfortGeo, silverMaterial);
+            innerComfort.scale.set(1, 1, 1.28);
+            ringGroup.add(innerComfort);
+
+            // 2. Pavé Side Diamonds on Silver Shoulders
+            const paveMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                metalness: 0.08,
+                roughness: 0.0,
+                envMap: envMap,
+                envMapIntensity: 3.0,
+                clearcoat: 1.0
+            });
+            const paveGeo = new THREE.OctahedronGeometry(0.036, 1);
+            for (let side = -1; side <= 1; side += 2) {
+                for (let i = 1; i <= 6; i++) {
+                    const angle = (Math.PI / 2) + side * (0.20 + i * 0.115);
+                    const gem = new THREE.Mesh(paveGeo, paveMat);
+                    gem.position.set(
+                        Math.cos(angle) * (bandRadius + 0.042),
+                        Math.sin(angle) * (bandRadius + 0.042),
+                        0
+                    );
+                    gem.rotation.z = angle - Math.PI / 2;
+                    ringGroup.add(gem);
+                }
+            }
+
+            // 3. 6-Prong Tiffany Crown Setting
+            const settingGroup = new THREE.Group();
+            settingGroup.position.set(0, bandRadius + 0.03, 0);
+            ringGroup.add(settingGroup);
+
+            const galleryRingGeo = new THREE.TorusGeometry(0.145, 0.018, 16, 48);
+            galleryRingGeo.rotateX(Math.PI / 2);
+            const galleryRing = new THREE.Mesh(galleryRingGeo, silverMaterial);
+            galleryRing.position.y = 0.095;
+            settingGroup.add(galleryRing);
+
+            const collarGeo = new THREE.CylinderGeometry(0.095, 0.06, 0.06, 24);
+            const collar = new THREE.Mesh(collarGeo, silverMaterial);
+            collar.position.y = 0.015;
+            settingGroup.add(collar);
+
+            const prongGeo = new THREE.CylinderGeometry(0.016, 0.013, 0.25, 12);
+            const prongTipGeo = new THREE.SphereGeometry(0.02, 12, 12);
+            for (let i = 0; i < 6; i++) {
+                const holder = new THREE.Group();
+                holder.rotation.y = (i / 6) * Math.PI * 2;
+
+                const prong = new THREE.Mesh(prongGeo, silverMaterial);
+                prong.position.set(0.135, 0.11, 0);
+                prong.rotation.z = -0.36;
+                holder.add(prong);
+
+                const tip = new THREE.Mesh(prongTipGeo, silverMaterial);
+                tip.position.set(0.178, 0.222, 0);
+                holder.add(tip);
+
+                settingGroup.add(holder);
+            }
+
+            // 4. Round Brilliant Cut Center Diamond
+            const diamondGeo = createBrilliantDiamondGeometry(0.22, 16);
+            const diamondOuterMat = new THREE.MeshPhysicalMaterial({
+                color: 0xf8fdff,
+                emissive: 0x0ea5e9,
+                emissiveIntensity: 0.2,
+                metalness: 0.06,
+                roughness: 0.0,
+                transparent: true,
+                opacity: 0.9,
+                envMap: envMap,
+                envMapIntensity: 3.6,
+                clearcoat: 1.0,
+                reflectivity: 1.0,
+                flatShading: true
+            });
+
+            diamondMesh = new THREE.Mesh(diamondGeo, diamondOuterMat);
+            diamondMesh.position.y = 0.185;
+            settingGroup.add(diamondMesh);
+
+            const innerCoreMat = new THREE.MeshStandardMaterial({
+                color: 0xe0f2fe,
+                metalness: 0.98,
+                roughness: 0.02,
+                envMap: envMap,
+                envMapIntensity: 4.2,
+                flatShading: true,
+                side: THREE.BackSide
+            });
+            const diamondCore = new THREE.Mesh(diamondGeo.clone(), innerCoreMat);
+            diamondCore.scale.set(0.92, 0.92, 0.92);
+            diamondMesh.add(diamondCore);
+
+            clickableMeshes.push(bandMesh, diamondMesh);
+        }
+
+        function createBrilliantDiamondGeometry(radius = 0.22, segments = 16) {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const tableR = radius * 0.56;
+            const crownMidR = radius * 0.82;
+            const girdleR = radius;
+            const yTable = radius * 0.34;
+            const yCrownMid = radius * 0.19;
+            const yGirdleTop = radius * 0.03;
+            const yGirdleBot = -radius * 0.03;
+            const yCulet = -radius * 0.88;
+
+            const pushTri = (p1, p2, p3) => {
+                vertices.push(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], p3[0], p3[1], p3[2]);
+            };
+            const ringPts = (r, y, count, phase = 0) => {
+                const arr = [];
+                for (let i = 0; i < count; i++) {
+                    const ang = (i / count) * Math.PI * 2 + phase;
+                    arr.push([Math.cos(ang) * r, y, Math.sin(ang) * r]);
+                }
+                return arr;
+            };
+
+            const topCenter = [0, yTable, 0];
+            const culetPt = [0, yCulet, 0];
+            const tableRing = ringPts(tableR, yTable, segments, 0);
+            const crownRing = ringPts(crownMidR, yCrownMid, segments, Math.PI / segments);
+            const girdleTopRing = ringPts(girdleR, yGirdleTop, segments, 0);
+            const girdleBotRing = ringPts(girdleR, yGirdleBot, segments, 0);
+
+            for (let i = 0; i < segments; i++) {
+                const next = (i + 1) % segments;
+                pushTri(topCenter, tableRing[next], tableRing[i]);
+                pushTri(tableRing[i], tableRing[next], crownRing[i]);
+                pushTri(tableRing[next], crownRing[next], crownRing[i]);
+                pushTri(crownRing[i], girdleTopRing[next], girdleTopRing[i]);
+                pushTri(crownRing[i], crownRing[next], girdleTopRing[next]);
+                pushTri(girdleTopRing[i], girdleTopRing[next], girdleBotRing[i]);
+                pushTri(girdleTopRing[next], girdleBotRing[next], girdleBotRing[i]);
+                pushTri(girdleBotRing[i], girdleBotRing[next], culetPt);
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.computeVertexNormals();
+            return geometry;
+        }
+
+        function buildSparkleAndMagicParticles() {
+            const starTex = createStarSparkleTexture();
+
+            // Diamond Crown Star Flares
+            const flareConfigs = [
+                { pos: new THREE.Vector3(0.08, 0.08, 0.08), baseScale: 0.46, speed: 4.2, phase: 0.0 },
+                { pos: new THREE.Vector3(-0.11, 0.06, 0.07), baseScale: 0.38, speed: 5.5, phase: 1.4 },
+                { pos: new THREE.Vector3(0.0, 0.12, -0.10), baseScale: 0.52, speed: 3.7, phase: 2.6 },
+                { pos: new THREE.Vector3(0.13, 0.03, -0.05), baseScale: 0.34, speed: 6.1, phase: 3.9 },
+                { pos: new THREE.Vector3(-0.07, 0.09, -0.08), baseScale: 0.40, speed: 4.8, phase: 5.1 },
+                { pos: new THREE.Vector3(0.28, -0.26, 0.04), baseScale: 0.25, speed: 5.0, phase: 0.8 },
+                { pos: new THREE.Vector3(-0.28, -0.26, -0.04), baseScale: 0.25, speed: 4.5, phase: 2.9 }
+            ];
+
+            flareConfigs.forEach((cfg) => {
+                const mat = new THREE.SpriteMaterial({
+                    map: starTex,
+                    color: 0xffffff,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const sprite = new THREE.Sprite(mat);
+                sprite.position.copy(cfg.pos);
+                sprite.userData = cfg;
+                diamondMesh.add(sprite);
+                diamondSparkleSprites.push(sprite);
+            });
+
+            // 3D Floating Ocean Magic Particles rising around the levitating box
+            const count = 85;
+            const positions = new Float32Array(count * 3);
+            const meta = [];
+            for (let i = 0; i < count; i++) {
+                const r = 0.7 + Math.random() * 2.8;
+                const angle = Math.random() * Math.PI * 2;
+                positions[i * 3] = Math.cos(angle) * r;
+                positions[i * 3 + 1] = -1.6 + Math.random() * 3.8;
+                positions[i * 3 + 2] = Math.sin(angle) * r;
+                meta.push({
+                    vy: 0.003 + Math.random() * 0.005,
+                    angle: angle,
+                    radius: r,
+                    spin: (Math.random() - 0.5) * 0.006
+                });
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({
+                map: starTex,
+                size: 0.24,
+                color: 0xbae6fd,
+                transparent: true,
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            floating3DSparkles = new THREE.Points(geo, mat);
+            floating3DSparkles.userData.meta = meta;
+            scene.add(floating3DSparkles);
+        }
+
+        function toggleWishCard(forceState) {
+            const nextState = typeof forceState === 'boolean' ? forceState : !APP_STATE.isWishVisible;
+            APP_STATE.isWishVisible = nextState;
+
+            const wishCardEl = document.getElementById('wish-card');
+            const labelWishEl = document.getElementById('label-toggle-wish');
+            const btnWishEl = document.getElementById('btn-toggle-wish');
+
+            if (APP_STATE.isWishVisible) {
+                wishCardEl.classList.remove('wish-hidden');
+                wishCardEl.classList.add('wish-visible');
+                if (labelWishEl) labelWishEl.textContent = 'Đóng lời chúc';
+                if (btnWishEl) btnWishEl.classList.add('bg-sky-400/35', 'border-sky-300/60');
+            } else {
+                wishCardEl.classList.remove('wish-visible');
+                wishCardEl.classList.add('wish-hidden');
+                if (labelWishEl) labelWishEl.textContent = 'Mở lời chúc';
+                if (btnWishEl) btnWishEl.classList.remove('bg-sky-400/35', 'border-sky-300/60');
+            }
+        }
+
+        function toggleGiftBox(forceState) {
+            const nextState = typeof forceState === 'boolean' ? forceState : !APP_STATE.isOpen;
+            APP_STATE.isOpen = nextState;
+            APP_STATE.targetLidAngle = APP_STATE.isOpen ? -1.80 : 0;
+
+            chimeAudio.playGiftChime(APP_STATE.isOpen);
+
+            const labelEl = document.getElementById('label-toggle-box');
+            const iconEl = document.getElementById('icon-box-state');
+            const auraEl = document.getElementById('ambient-aura');
+
+            if (APP_STATE.isOpen) {
+                labelEl.textContent = 'Đóng Hộp Nhẫn';
+                iconEl.style.transform = 'rotate(180deg)';
+                toggleWishCard(true);
+                auraEl.classList.add('box-opened');
+
+                if (!APP_STATE.isCloseup) {
+                    cameraControl.targetRadius = 6.3;
+                    cameraControl.targetPhi = 1.04;
+                    cameraControl.lookAtTarget.set(0, 0.35, 0);
+                }
+            } else {
+                labelEl.textContent = 'Mở Hộp Nhẫn & Xem Lời Chúc';
+                iconEl.style.transform = 'rotate(0deg)';
+                toggleWishCard(false);
+                auraEl.classList.remove('box-opened');
+
+                if (APP_STATE.isRingElevated) {
+                    toggleRingElevation(false);
+                }
+                APP_STATE.isCloseup = false;
+                cameraControl.targetRadius = 7.2;
+                cameraControl.targetPhi = 1.06;
+                cameraControl.lookAtTarget.set(0, 0.15, 0);
+            }
+        }
+
+        function toggleRingElevation(forceState) {
+            const next = typeof forceState === 'boolean' ? forceState : !APP_STATE.isRingElevated;
+            if (next && !APP_STATE.isOpen) {
+                toggleGiftBox(true);
+            }
+            APP_STATE.isRingElevated = next;
+            const lbl = document.getElementById('label-levitate-ring');
+            lbl.textContent = APP_STATE.isRingElevated ? 'Hạ nhẫn xuống' : 'Nâng nhẫn';
+        }
+
+        function applyBoxThemeAndSyncBackground(themeKey) {
+            const theme = OCEAN_THEMES[themeKey];
+            if (!theme) return;
+            APP_STATE.themeKey = themeKey;
+
+            // Update 3D Box Materials
+            velvetOuterMat.color.setHex(theme.boxOuterHex);
+            velvetOuterMat.emissive.setHex(theme.boxEmissiveHex);
+            velvetCushionMat.color.setHex(theme.cushionHex);
+            satinInnerMat.color.setHex(theme.satinHex);
+            haloRingMat1.color.setHex(theme.haloHex);
+            haloRingMat2.color.setHex(theme.haloHex);
+
+            // Sync CSS Background Variables
+            document.documentElement.style.setProperty('--box-primary', theme.cssPrimary);
+            document.documentElement.style.setProperty('--box-glow', theme.cssGlow);
+            document.documentElement.style.setProperty('--box-deep', theme.cssDeep);
+
+            document.querySelectorAll('.swatch-pill').forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.theme === themeKey);
+            });
+        }
+
+        function loadWishFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const to = params.get('to');
+            const msg = params.get('msg');
+            const sig = params.get('sig');
+            const theme = params.get('theme');
+
+            if (to) document.getElementById('wish-recipient').textContent = to;
+            if (msg) document.getElementById('wish-message').textContent = `“${msg.replace(/^[“"]|[”"]$/g, '')}”`;
+            if (sig) document.getElementById('wish-signature').textContent = sig;
+            if (theme && OCEAN_THEMES[theme]) applyBoxThemeAndSyncBackground(theme);
+        }
+
+        function setupInteractions(container) {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
+            const onDown = (x, y) => {
+                cameraControl.isDragging = true;
+                cameraControl.prevX = x;
+                cameraControl.prevY = y;
+                cameraControl.downX = x;
+                cameraControl.downY = y;
+            };
+
+            const onMove = (x, y) => {
+                if (!cameraControl.isDragging) return;
+                const dx = x - cameraControl.prevX;
+                const dy = y - cameraControl.prevY;
+                cameraControl.prevX = x;
+                cameraControl.prevY = y;
+                cameraControl.targetTheta -= dx * 0.0075;
+                cameraControl.targetPhi = Math.max(0.38, Math.min(1.45, cameraControl.targetPhi - dy * 0.0065));
+            };
+
+            const onUp = (x, y) => {
+                if (!cameraControl.isDragging) return;
+                cameraControl.isDragging = false;
+                if (Math.hypot(x - cameraControl.downX, y - cameraControl.downY) < 6) {
+                    mouse.x = (x / window.innerWidth) * 2 - 1;
+                    mouse.y = -(y / window.innerHeight) * 2 + 1;
+                    raycaster.setFromCamera(mouse, camera);
+                    const hits = raycaster.intersectObjects(clickableMeshes, false);
+                    if (hits.length > 0) toggleGiftBox();
+                }
+            };
+
+            container.addEventListener('mousedown', (e) => onDown(e.clientX, e.clientY));
+            window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', (e) => onUp(e.clientX, e.clientY));
+
+            container.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) onDown(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) onMove(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener('touchend', (e) => {
+                if (e.changedTouches.length > 0) onUp(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+            });
+
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                cameraControl.targetRadius = Math.max(3.2, Math.min(10.5, cameraControl.targetRadius + e.deltaY * 0.004));
+            }, { passive: false });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                resizeBgCanvas();
+            });
+
+            // UI Controls
+            document.getElementById('btn-toggle-box').addEventListener('click', () => toggleGiftBox());
+            document.getElementById('btn-toggle-wish').addEventListener('click', () => toggleWishCard());
+            document.getElementById('btn-close-wish').addEventListener('click', () => toggleWishCard(false));
+            document.getElementById('btn-levitate-ring').addEventListener('click', () => toggleRingElevation());
+
+            document.getElementById('btn-closeup').addEventListener('click', () => {
+                if (!APP_STATE.isOpen) toggleGiftBox(true);
+                APP_STATE.isCloseup = !APP_STATE.isCloseup;
+                if (APP_STATE.isCloseup) {
+                    cameraControl.targetRadius = 3.85;
+                    cameraControl.targetPhi = 0.95;
+                    cameraControl.lookAtTarget.set(0, 0.55, 0);
+                } else {
+                    cameraControl.targetRadius = 6.3;
+                    cameraControl.targetPhi = 1.04;
+                    cameraControl.lookAtTarget.set(0, 0.35, 0);
+                }
+            });
+
+            document.querySelectorAll('.swatch-pill').forEach((btn) => {
+                btn.addEventListener('click', () => applyBoxThemeAndSyncBackground(btn.dataset.theme));
+            });
+
+            document.getElementById('btn-sound').addEventListener('click', () => {
+                APP_STATE.soundEnabled = !APP_STATE.soundEnabled;
+                document.getElementById('icon-sound-on').classList.toggle('hidden', !APP_STATE.soundEnabled);
+                document.getElementById('icon-sound-off').classList.toggle('hidden', APP_STATE.soundEnabled);
+            });
+        }
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsed = clock.getElapsedTime();
+
+            // 1. Mid-Air Levitation Animation for the Entire Rounded Ring Box ("hộp lơ lửng")
+            if (levitatingRootGroup) {
+                const floatY = Math.sin(elapsed * 1.65) * 0.16;
+                levitatingRootGroup.position.y = floatY;
+                levitatingRootGroup.rotation.z = Math.sin(elapsed * 0.9) * 0.028;
+                levitatingRootGroup.rotation.x = Math.cos(elapsed * 1.1) * 0.022;
+            }
+
+            // 2. Pulse the Floating Magical Aura Rings below the Box
+            if (floatingHaloGroup) {
+                const scalePulse = 1 + Math.sin(elapsed * 1.65) * 0.08;
+                floatingHaloGroup.scale.set(scalePulse, 1, scalePulse);
+                floatingHaloGroup.rotation.y = elapsed * 0.3;
+            }
+
+            // 3. Smoothly Open / Close the Rounded Lid
+            APP_STATE.lidAngle += (APP_STATE.targetLidAngle - APP_STATE.lidAngle) * 0.075;
+            if (boxLidPivot) {
+                boxLidPivot.rotation.x = APP_STATE.lidAngle;
+            }
+
+            const openRatio = Math.min(1, Math.max(0, Math.abs(APP_STATE.lidAngle) / 1.80));
+            APP_STATE.openProgress = openRatio;
+
+            if (innerBoxLight) {
+                innerBoxLight.intensity = openRatio * 1.15;
+            }
+
+            // 4. Animate the 925 Silver Diamond Ring Inside
+            const targetElevation = APP_STATE.isRingElevated ? 1 : 0;
+            APP_STATE.ringElevation += (targetElevation - APP_STATE.ringElevation) * 0.07;
+
+            if (ringGroup) {
+                const baseRise = 0.20 + openRatio * 0.10 + APP_STATE.ringElevation * 0.65;
+                const ringFloat = APP_STATE.ringElevation * Math.sin(elapsed * 2.6) * 0.045;
+                ringGroup.position.y = baseRise + ringFloat;
+
+                if (APP_STATE.ringElevation > 0.04) {
+                    ringGroup.rotation.y += 0.014 * APP_STATE.ringElevation;
+                    ringGroup.rotation.x = (1 - APP_STATE.ringElevation) * 0.14;
+                } else {
+                    ringGroup.rotation.y *= 0.92;
+                    ringGroup.rotation.x = 0.14;
+                }
+            }
+
+            // 5. Diamond Sparkle Flares
+            const sparkleFactor = Math.pow(openRatio, 1.3);
+            diamondSparkleSprites.forEach((sprite) => {
+                if (sparkleFactor <= 0.01) {
+                    sprite.visible = false;
+                    return;
+                }
+                sprite.visible = true;
+                const cfg = sprite.userData;
+                const wave = Math.sin(elapsed * cfg.speed + cfg.phase + cameraControl.theta * 6.0);
+                const pulse = Math.max(0, wave);
+                const scale = cfg.baseScale * (0.4 + pulse * 0.95) * sparkleFactor;
+                sprite.scale.set(scale, scale, 1);
+                sprite.material.opacity = (0.35 + pulse * 0.65) * sparkleFactor;
+            });
+
+            // 6. Rising 3D Magic Ocean Sparkles
+            if (floating3DSparkles) {
+                const posAttr = floating3DSparkles.geometry.attributes.position;
+                const meta = floating3DSparkles.userData.meta;
+                for (let i = 0; i < meta.length; i++) {
+                    meta[i].angle += meta[i].spin;
+                    let y = posAttr.getY(i) + meta[i].vy * (1 + openRatio * 0.6);
+                    if (y > 2.4) y = -1.6;
+                    posAttr.setX(i, Math.cos(meta[i].angle) * meta[i].radius);
+                    posAttr.setY(i, y);
+                    posAttr.setZ(i, Math.sin(meta[i].angle) * meta[i].radius);
+                }
+                posAttr.needsUpdate = true;
+            }
+
+            // 7. Smooth 360° Orbit Camera
+            if (!cameraControl.isDragging) {
+                cameraControl.targetTheta += 0.0028;
+            }
+            cameraControl.theta += (cameraControl.targetTheta - cameraControl.theta) * 0.08;
+            cameraControl.phi += (cameraControl.targetPhi - cameraControl.phi) * 0.08;
+            cameraControl.radius += (cameraControl.targetRadius - cameraControl.radius) * 0.08;
+            cameraControl.currentLookAt.lerp(cameraControl.lookAtTarget, 0.08);
+
+            camera.position.x = cameraControl.radius * Math.sin(cameraControl.phi) * Math.sin(cameraControl.theta);
+            camera.position.y = cameraControl.radius * Math.cos(cameraControl.phi);
+            camera.position.z = cameraControl.radius * Math.sin(cameraControl.phi) * Math.cos(cameraControl.theta);
+            camera.lookAt(cameraControl.currentLookAt);
+
+            // Render both 2D Dynamic Ocean Background and 3D Scene
+            renderDynamicBackground(elapsed);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function () {
+            initDynamicBackground();
+            initThreeExperience();
+            animate();
+        };
+    </script>
+</body>
+</html>
